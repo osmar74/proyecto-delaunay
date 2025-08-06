@@ -149,6 +149,7 @@ body {
     padding-top: 1rem;
     z-index: 999;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    border-right: 1px solid var(--border-color); /* Borde derecho */
 }
 
 .sidebar.show {
@@ -198,6 +199,10 @@ hr {
     overflow-y: auto; /* Permite scroll solo en el contenido principal */
     transition: margin-left 0.3s ease;
     margin-left: 0; /* Por defecto, sin sidebar */
+    border-left: 1px solid var(--border-color); /* Borde izquierdo */
+    /* Agregamos un ancho máximo para pantallas muy grandes */
+    max-width: 1400px; /* Ejemplo de un ancho máximo razonable */
+    margin-inline: auto; /* Centra el contenido si hay espacio extra */
 }
 
 .main-content.pushed {
