@@ -42,7 +42,7 @@ def upload_image():
         return jsonify({
             'success': True,
             'original_image_url': f'/uploaded_images/{filename}',
-            'message': 'Imagen subida correctamente. Use los botones para procesar.'
+            'message': 'Imagen subida correctamente. Usa los botones para procesar.'
         })
 
 @app.route('/detect_points', methods=['POST'])
@@ -55,7 +55,7 @@ def detect_points():
     if image is None:
         return jsonify({'error': 'No se pudo cargar la imagen'}), 500
     
-    # Procesar la imagen con la clase FaceProcessor (Modelo)
+    # Procesar la imagen con la clase FaceProcessor (ahora con MediaPipe)
     processed_image, _, error = processor.detect_face_landmarks(image.copy())
 
     if error:
@@ -65,7 +65,6 @@ def detect_points():
     temp_path = os.path.join(app.config['UPLOAD_FOLDER'], 'detected_' + filename)
     cv2.imwrite(temp_path, processed_image)
 
-    # Actualizar la ruta global para que apunte a la imagen procesada
     last_image_path = temp_path
 
     return jsonify({
@@ -98,7 +97,6 @@ def triangulate_delaunay():
     temp_path = os.path.join(app.config['UPLOAD_FOLDER'], 'triangulated_' + filename)
     cv2.imwrite(temp_path, triangulated_image)
     
-    # Actualizar la ruta global para que apunte a la imagen triangulada
     last_image_path = temp_path
 
     return jsonify({
