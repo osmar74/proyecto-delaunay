@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delaunay Web</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <nav>
+            <div class="logo">DelaunayWeb</div>
+            <ul class="menu-list">
+                <li><button id="btn-iniciar">Iniciar</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <nav>
+                <ul class="sidebar-menu">
+                    <li><button class="menu-item" id="btn-capturar-foto">Capturar con Webcam</button></li>
+                    <li><label for="input-upload-file" class="menu-item">Subir Imagen</label></li>
+                    <input type="file" id="input-upload-file" accept="image/*" style="display: none;">
+                    <hr>
+                    <li><button class="menu-item" id="btn-detectar">Detectar Puntos</button></li>
+                    <li><button class="menu-item" id="btn-triangular">Triangular Delaunay</button></li>
+                    <hr>
+                    <li><button class="menu-item" id="btn-salvar">Salvar Imagen</button></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="intro-message" id="intro-message">
+                <h1>Bienvenido a DelaunayWeb</h1>
+                <p>Usa los botones del menú lateral para comenzar el procesamiento.</p>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
