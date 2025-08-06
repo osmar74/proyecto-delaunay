@@ -7,14 +7,19 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <header class="header">
-        <nav>
-            <div class="logo">DelaunayWeb</div>
-            <ul class="menu-list">
-                <li><button id="btn-iniciar">Iniciar</button></li>
-            </ul>
-        </nav>
-    </header>
+<header class="header">
+    <div class="header-left">
+        <div class="logo">DelaunayWeb</div>
+    </div>
+    <div class="header-center">
+        <ul class="menu-list">
+            <li><button id="btn-iniciar">Iniciar</button></li>
+        </ul>
+    </div>
+    <div class="header-right">
+        <img src="{{ url_for('static', filename='img/orat_foto.jpg') }}" alt="Foto de Perfil" class="profile-pic">
+    </div>
+</header>
 
     <div class="container">
         <aside class="sidebar" id="sidebar">
