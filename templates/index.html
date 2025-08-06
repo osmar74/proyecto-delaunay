@@ -3,47 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delaunay Web</title>
+    <title>Delaunay WebApp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-<header class="header">
-    <div class="header-left">
-        <div class="logo">DelaunayWeb</div>
-    </div>
-    <div class="header-center">
-        <ul class="menu-list">
-            <li><button id="btn-iniciar">Iniciar</button></li>
-        </ul>
-    </div>
-    <div class="header-right">
-        <img src="{{ url_for('static', filename='img/orat_foto.jpg') }}" alt="Foto de Perfil" class="profile-pic">
-    </div>
-</header>
+    <header class="header">
+        <a href="/" class="logo">Delaunay WebApp</a>
+        <div class="header-right">
+            <button id="btn-iniciar" class="iniciar">Iniciar</button>
+            <div class="profile-container">
+                <img src="{{ url_for('static', filename='img/orat_foto.jpg') }}" alt="Foto de Perfil" class="profile-pic">
+            </div>
+        </div>
+    </header>
 
     <div class="container">
         <aside class="sidebar" id="sidebar">
             <nav>
                 <ul class="sidebar-menu">
-                    <li><button class="menu-item" id="btn-capturar-foto">Capturar con Webcam</button></li>
-                    <li><label for="input-upload-file" class="menu-item">Subir Imagen</label></li>
+                    <li><button class="menu-item" id="btn-capturar-foto"><i class="fas fa-video"></i> Capturar con Webcam</button></li>
+                    <li><label for="input-upload-file" class="menu-item"><i class="fas fa-upload"></i> Subir Imagen</label></li>
                     <input type="file" id="input-upload-file" accept="image/*" style="display: none;">
                     <hr>
-                    <li><button class="menu-item" id="btn-detectar">Detectar Puntos</button></li>
-                    <li><button class="menu-item" id="btn-triangular">Triangular Delaunay</button></li>
+                    <li><button class="menu-item" id="btn-detectar"><i class="fas fa-search-plus"></i> Detectar Puntos</button></li>
+                    <li><button class="menu-item" id="btn-triangular"><i class="fas fa-draw-polygon"></i> Triangular Delaunay</button></li>
                     <hr>
-                    <li><button class="menu-item" id="btn-salvar">Salvar Imagen</button></li>
+                    <li><button class="menu-item" id="btn-salvar"><i class="fas fa-save"></i> Salvar Imagen</button></li>
                 </ul>
             </nav>
         </aside>
-
-        <main class="main-content">
+        <main class="main-content" id="main-content">
             <div class="intro-message" id="intro-message">
-                <h1>Bienvenido a DelaunayWeb</h1>
-                <p>Usa los botones del menú lateral para comenzar el procesamiento.</p>
+                <h1>Bienvenido a la Delaunay WebApp</h1>
+                <p>Usa el menú de la izquierda para empezar.</p>
             </div>
         </main>
     </div>
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

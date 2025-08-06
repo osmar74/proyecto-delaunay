@@ -52,7 +52,7 @@ class FaceProcessor:
 
         # Convierte los puntos a un formato compatible con OpenCV
         points_np = np.array(points)
-
+        
         # Obtiene el rectángulo delimitador de los puntos
         rect = cv2.boundingRect(points_np)
 

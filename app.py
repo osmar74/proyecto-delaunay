@@ -8,6 +8,9 @@ from models.face_processor import FaceProcessor
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'data_rostro'
 
+# Almacenamiento temporal para la última imagen subida o capturada
+last_image_path = None
+
 # Asegurarse de que la carpeta de subidas exista
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
@@ -21,6 +24,7 @@ def index():
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
+    global last_image_path
     if 'file' not in request.files:
         return jsonify({'error': 'No file part in the request'}), 400
 
@@ -33,27 +37,69 @@ def upload_image():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        # Cargar la imagen con OpenCV
-        image = cv2.imread(filepath)
-        if image is None:
-            return jsonify({'error': 'No se pudo cargar la imagen'}), 500
-
-        # Procesar la imagen con la clase FaceProcessor (Modelo)
-        processed_image, landmarks, error = processor.detect_face_landmarks(image.copy())
-
-        if error:
-            return jsonify({'error': error}), 400
-
-        # Guardar la imagen procesada temporalmente
-        temp_path = os.path.join(app.config['UPLOAD_FOLDER'], 'processed_' + filename)
-        cv2.imwrite(temp_path, processed_image)
+        last_image_path = filepath
 
         return jsonify({
             'success': True,
             'original_image_url': f'/uploaded_images/{filename}',
-            'processed_image_url': f'/uploaded_images/processed_{filename}',
-            'landmarks_count': len(landmarks) if landmarks else 0
+            'message': 'Imagen subida correctamente. Use los botones para procesar.'
         })
+
+@app.route('/detect_points', methods=['POST'])
+def detect_points():
+    global last_image_path
+    if not last_image_path or not os.path.exists(last_image_path):
+        return jsonify({'error': 'No hay una imagen para procesar'}), 400
+    
+    image = cv2.imread(last_image_path)
+    if image is None:
+        return jsonify({'error': 'No se pudo cargar la imagen'}), 500
+    
+    # Procesar la imagen con la clase FaceProcessor (Modelo)
+    processed_image, _, error = processor.detect_face_landmarks(image.copy())
+
+    if error:
+        return jsonify({'error': error}), 400
+
+    filename = os.path.basename(last_image_path)
+    temp_path = os.path.join(app.config['UPLOAD_FOLDER'], 'detected_' + filename)
+    cv2.imwrite(temp_path, processed_image)
+
+    return jsonify({
+        'success': True,
+        'image_url': f'/uploaded_images/detected_{filename}',
+        'message': 'Puntos faciales detectados.'
+    })
+    
+@app.route('/triangulate_delaunay', methods=['POST'])
+def triangulate_delaunay():
+    global last_image_path
+    if not last_image_path or not os.path.exists(last_image_path):
+        return jsonify({'error': 'No hay una imagen para triangular'}), 400
+
+    image = cv2.imread(last_image_path)
+    if image is None:
+        return jsonify({'error': 'No se pudo cargar la imagen'}), 500
+
+    # Primero detectamos los puntos para la triangulación
+    _, landmarks, error = processor.detect_face_landmarks(image.copy())
+    if error:
+        return jsonify({'error': error}), 400
+
+    # Luego aplicamos la triangulación
+    triangulated_image, error = processor.draw_delaunay_triangles(image.copy(), landmarks)
+    if error:
+        return jsonify({'error': error}), 400
+
+    filename = os.path.basename(last_image_path)
+    temp_path = os.path.join(app.config['UPLOAD_FOLDER'], 'triangulated_' + filename)
+    cv2.imwrite(temp_path, triangulated_image)
+    
+    return jsonify({
+        'success': True,
+        'image_url': f'/uploaded_images/triangulated_{filename}',
+        'message': 'Triangulación de Delaunay aplicada.'
+    })
 
 @app.route('/uploaded_images/<filename>')
 def uploaded_file(filename):
