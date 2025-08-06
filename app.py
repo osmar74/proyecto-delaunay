@@ -1,17 +1,11 @@
 import os
 import cv2
 import numpy as np
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from models.face_processor import FaceProcessor
 
 # Configuración de Flask
 app = Flask(__name__)
-app = Flask(__name__, static_url_path='/static')
-app.add_url_rule(
-    "/static/data_rostro/<path:filename>",
-    endpoint="data_rostro",
-    view_func=app.send_static_file,
-)
 app.config['UPLOAD_FOLDER'] = 'data_rostro'
 
 # Asegurarse de que la carpeta de subidas exista
@@ -56,9 +50,17 @@ def upload_image():
 
         return jsonify({
             'success': True,
-            'image_url': f'/static/{app.config["UPLOAD_FOLDER"]}/processed_{filename}',
+            'original_image_url': f'/uploaded_images/{filename}',
+            'processed_image_url': f'/uploaded_images/processed_{filename}',
             'landmarks_count': len(landmarks) if landmarks else 0
         })
+
+@app.route('/uploaded_images/<filename>')
+def uploaded_file(filename):
+    """
+    Ruta para servir archivos desde la carpeta data_rostro.
+    """
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
     app.run(debug=True)

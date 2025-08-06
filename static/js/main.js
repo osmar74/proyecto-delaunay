@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Event listener para el botón de "Subir Imagen"
     inputUploadFile.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -29,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData();
         formData.append('file', file);
 
-        // Mostrar un mensaje de carga
         mainContent.innerHTML = `
             <div class="intro-message">
                 <h1>Procesando imagen...</h1>
@@ -49,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const result = await response.json();
-            displayResults(file, result);
+            displayResults(result);
 
         } catch (error) {
             console.error('Error:', error);
@@ -62,32 +60,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function displayResults(originalFile, result) {
+    function displayResults(result) {
+        const mainContent = document.querySelector('.main-content');
         mainContent.innerHTML = ''; // Limpia el contenido anterior
 
         const gridContainer = document.createElement('div');
         gridContainer.className = 'grid-container';
 
         // Cuadro para la imagen original
-        const originalImageURL = URL.createObjectURL(originalFile);
         gridContainer.innerHTML += `
             <div class="result-container">
                 <h2>Imagen Original</h2>
-                <img src="${originalImageURL}" alt="Imagen Original">
+                <img src="${result.original_image_url}" alt="Imagen Original">
             </div>
         `;
-
+        
         // Cuadro para la imagen procesada
         gridContainer.innerHTML += `
             <div class="result-container">
                 <h2>Rostro y Puntos Detectados</h2>
-                <img src="${result.image_url}" alt="Imagen Procesada">
+                <img src="${result.processed_image_url}" alt="Imagen Procesada">
             </div>
         `;
-
+        
         mainContent.appendChild(gridContainer);
-
-        // Revoca la URL del objeto después de un tiempo para liberar memoria
-        setTimeout(() => URL.revokeObjectURL(originalImageURL), 5000);
     }
 });
