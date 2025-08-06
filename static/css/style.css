@@ -142,3 +142,45 @@ hr {
     text-align: center;
     padding-top: 100px;
 }
+
+/* Estilos para los cuadros de resultados */
+.result-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+    background-color: var(--sidebar-bg); /* Fondo oscuro para los cuadros */
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.result-container h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.result-container img, .result-container canvas {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border-color);
+    margin-top: 1rem;
+}
+
+/* Layout de 4 cuadros */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Estilos para el video de la webcam */
+#webcam-feed {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    border: 1px solid var(--border-color);
+    background-color: var(--sidebar-bg);
+}
