@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delaunay WebApp</title>
+    <!-- Incluye Font Awesome para los íconos de los botones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Enlace a la hoja de estilos personalizada -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -21,25 +23,41 @@
     </header>
 
     <div class="container">
+        <!-- Barra lateral de navegación -->
         <aside class="sidebar" id="sidebar">
             <nav>
                 <ul class="sidebar-menu">
+                    <!-- Botón para capturar foto con la webcam -->
                     <li><button class="menu-item" id="btn-capturar-foto"><i class="fas fa-video"></i> Capturar con Webcam</button></li>
+                    <!-- Botón para subir una imagen -->
                     <li><label for="input-upload-file" class="menu-item"><i class="fas fa-upload"></i> Subir Imagen</label></li>
                     <input type="file" id="input-upload-file" accept="image/*" style="display: none;">
                     <hr>
                     
+                    <!-- Entrada para el número de puntos -->
                     <li>
                         <label for="num_points" class="menu-item-label">Cantidad de Puntos (1-468):</label>
                         <input type="number" id="num_points" class="menu-item" value="68" min="1" max="468">
                     </li>
+                    
+                    <!-- Botones de procesamiento -->
                     <li><button class="menu-item" id="btn-detectar"><i class="fas fa-search-plus"></i> Detectar Puntos</button></li>
                     <li><button class="menu-item" id="btn-triangular"><i class="fas fa-draw-polygon"></i> Triangular Delaunay</button></li>
+                    
                     <hr>
+                    
+                    <!-- Botón para rotar la imagen -->
+                    <li><button class="menu-item" id="btn-rotar"><i class="fas fa-sync-alt"></i> Rotar Imagen</button></li>
+
+                    <hr>
+                    
+                    <!-- Botón para guardar la imagen -->
                     <li><button class="menu-item" id="btn-salvar"><i class="fas fa-save"></i> Salvar Imagen</button></li>
                 </ul>
             </nav>
         </aside>
+        
+        <!-- Contenido principal donde se muestran las imágenes -->
         <main class="main-content" id="main-content">
             <div class="intro-message" id="intro-message">
                 <h1>Bienvenido a la Delaunay WebApp</h1>
@@ -48,6 +66,7 @@
         </main>
     </div>
 
+    <!-- Enlace al archivo JavaScript principal -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
