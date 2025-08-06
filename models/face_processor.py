@@ -3,21 +3,16 @@ import mediapipe as mp
 import numpy as np
 
 class FaceProcessor:
-    """
-    Clase para procesar imágenes, detectando 468 puntos faciales con MediaPipe
-    y aplicando la triangulación de Delaunay.
-    """
     def __init__(self):
-        # Inicializa la clase de Face Mesh de MediaPipe
+        # Inicializa MediaPipe Face Mesh
         self.mp_face_mesh = mp.solutions.face_mesh
         self.face_mesh = self.mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5)
 
-    def detect_face_landmarks(self, image):
+    def detect_face_landmarks(self, image, desired_points_indices=None):
         """
-        Detecta los 468 puntos faciales en una imagen usando MediaPipe.
-        Retorna la imagen con los puntos dibujados.
+        Detecta los 468 puntos faciales en una imagen usando MediaPipe
+        y filtra para dibujar solo los puntos con los índices deseados.
         """
-        # Convertir la imagen a RGB, que es el formato que usa MediaPipe
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = self.face_mesh.process(rgb_image)
 
@@ -25,46 +20,76 @@ class FaceProcessor:
         if results.multi_face_landmarks:
             for face_landmarks in results.multi_face_landmarks:
                 for idx, landmark in enumerate(face_landmarks.landmark):
-                    h, w, c = image.shape
-                    cx, cy = int(landmark.x * w), int(landmark.y * h)
-                    landmarks_points.append((cx, cy))
-                    # Dibuja un círculo en cada punto
-                    cv2.circle(image, (cx, cy), 1, (0, 255, 0), -1)
+                    # Solo procesa si el índice está en la lista de puntos deseados
+                    # Si desired_points_indices es None, dibuja todos los puntos
+                    if desired_points_indices is None or idx in desired_points_indices:
+                        h, w, c = image.shape
+                        cx, cy = int(landmark.x * w), int(landmark.y * h)
+                        landmarks_points.append((cx, cy))
+                        cv2.circle(image, (cx, cy), 1, (0, 255, 0), -1)
+
             return image, landmarks_points, None
         
         return image, None, "No se detectaron rostros."
 
-    def draw_delaunay_triangles(self, image, points):
+    def draw_points_on_black_bg(self, image_shape, landmarks):
         """
-        Calcula y dibuja la triangulación de Delaunay sobre una imagen.
+        Dibuja los puntos faciales en una imagen de fondo negro.
         """
-        if not points:
-            return image, "No hay puntos faciales para triangular."
+        black_bg = np.zeros(image_shape, dtype=np.uint8)
+        if landmarks:
+            for point in landmarks:
+                cv2.circle(black_bg, point, 1, (0, 255, 0), -1)
+        return black_bg
 
-        # Convierte los puntos a un formato compatible con OpenCV
-        points_np = np.array(points)
+    def draw_delaunay_triangles(self, image, landmarks):
+        """
+        Dibuja los triángulos de Delaunay en la imagen original.
+        """
+        if not landmarks or len(landmarks) < 3:
+            return image, "No hay suficientes puntos para la triangulación."
         
-        # Crea una copia de la imagen para dibujar los triángulos
-        triangulated_image = image.copy()
-        
-        # Obtiene el rectángulo delimitador de los puntos
-        rect = cv2.boundingRect(points_np)
-
-        # Crea una subdivisión de Delaunay
+        delaunay_image = image.copy()
+        rect = (0, 0, image.shape[1], image.shape[0])
         subdiv = cv2.Subdiv2D(rect)
-        for p in points:
-            subdiv.insert(p)
 
-        # Obtiene los triángulos de Delaunay
+        for p in landmarks:
+            subdiv.insert((int(p[0]), int(p[1])))
+
         triangles = subdiv.getTriangleList()
 
-        # Dibuja los triángulos en la imagen
         for t in triangles:
             pt1 = (int(t[0]), int(t[1]))
             pt2 = (int(t[2]), int(t[3]))
             pt3 = (int(t[4]), int(t[5]))
-            cv2.line(triangulated_image, pt1, pt2, (255, 255, 255), 1)
-            cv2.line(triangulated_image, pt2, pt3, (255, 255, 255), 1)
-            cv2.line(triangulated_image, pt3, pt1, (255, 255, 255), 1)
+            cv2.line(delaunay_image, pt1, pt2, (0, 255, 0), 1)
+            cv2.line(delaunay_image, pt2, pt3, (0, 255, 0), 1)
+            cv2.line(delaunay_image, pt3, pt1, (0, 255, 0), 1)
+        
+        return delaunay_image, None
+    
+    def draw_delaunay_on_black_bg(self, image_shape, landmarks):
+        """
+        Dibuja los triángulos de Delaunay en una imagen de fondo negro.
+        """
+        black_bg = np.zeros(image_shape, dtype=np.uint8)
+        if not landmarks or len(landmarks) < 3:
+            return black_bg, "No hay suficientes puntos para la triangulación."
+        
+        rect = (0, 0, image_shape[1], image_shape[0])
+        subdiv = cv2.Subdiv2D(rect)
 
-        return triangulated_image, None
+        for p in landmarks:
+            subdiv.insert((int(p[0]), int(p[1])))
+
+        triangles = subdiv.getTriangleList()
+
+        for t in triangles:
+            pt1 = (int(t[0]), int(t[1]))
+            pt2 = (int(t[2]), int(t[3]))
+            pt3 = (int(t[4]), int(t[5]))
+            cv2.line(black_bg, pt1, pt2, (0, 255, 0), 1)
+            cv2.line(black_bg, pt2, pt3, (0, 255, 0), 1)
+            cv2.line(black_bg, pt3, pt1, (0, 255, 0), 1)
+        
+        return black_bg, None

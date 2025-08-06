@@ -8,10 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnDetectar = document.getElementById('btn-detectar');
     const btnTriangular = document.getElementById('btn-triangular');
     const btnSalvar = document.getElementById('btn-salvar');
+    const numPointsInput = document.getElementById('num_points');
 
     let videoStream = null;
+    let currentOriginalImageURL = null;
+    let currentDetectedImageURL = null;
+    let currentPointsOnlyURL = null;
 
-    // Lógica para mostrar/ocultar el sidebar
     btnIniciar.addEventListener('click', () => {
         sidebar.classList.toggle('show');
         mainContent.classList.toggle('pushed');
@@ -20,20 +23,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (introMessage) introMessage.style.display = 'none';
         } else {
             btnIniciar.textContent = 'Iniciar';
-            if (introMessage) introMessage.style.display = 'block';
-            
-            // Detener la cámara web si está activa
-            stopWebcam();
-            
-            // Limpiar el contenido del main-content al salir
-            mainContent.innerHTML = '';
+            if (introMessage) mainContent.innerHTML = '';
             if (introMessage) mainContent.appendChild(introMessage);
             introMessage.style.display = 'block';
+            stopWebcam();
+            currentOriginalImageURL = null;
+            currentDetectedImageURL = null;
+            currentPointsOnlyURL = null;
         }
     });
 
-    // ... (El resto del código sigue igual, ya lo tenemos sincronizado) ...
-    // Lógica para subir una imagen desde un archivo
     inputUploadFile.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -41,9 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Lógica para usar la cámara web
     btnCapturarFoto.addEventListener('click', async () => {
-        stopWebcam(); // Detener cualquier stream previo
+        stopWebcam();
         try {
             mainContent.innerHTML = `
                 <div class="result-container">
@@ -56,12 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             videoStream = stream;
             videoElement.srcObject = stream;
-
             const captureButton = document.getElementById('btn-capture');
             captureButton.addEventListener('click', () => {
                 captureAndProcess(videoElement);
             });
-
         } catch (error) {
             console.error("Error al acceder a la cámara:", error);
             mainContent.innerHTML = `
@@ -93,32 +89,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Función principal para enviar imágenes al backend
     async function uploadImage(file) {
         const formData = new FormData();
         formData.append('file', file);
-
         mainContent.innerHTML = `
             <div class="intro-message">
                 <h1>Subiendo imagen...</h1>
                 <p>Esto puede tardar unos segundos.</p>
             </div>
         `;
-
         try {
             const response = await fetch('/upload_image', {
                 method: 'POST',
                 body: formData,
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Error al subir la imagen');
             }
-
             const result = await response.json();
-            displayOriginalImage(result.original_image_url);
-
+            currentOriginalImageURL = result.original_image_url;
+            displayInitialResult(result.original_image_url);
         } catch (error) {
             console.error('Error:', error);
             mainContent.innerHTML = `
@@ -129,9 +120,17 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
     }
-    
-    // Nueva función para manejar el procesamiento desde los botones
+
     async function processImage(endpoint, message) {
+        if (!currentOriginalImageURL) {
+            return;
+        }
+
+        let numPoints = 0;
+        if (numPointsInput) {
+            numPoints = numPointsInput.value;
+        }
+
         mainContent.innerHTML = `
             <div class="intro-message">
                 <h1>${message}</h1>
@@ -139,12 +138,17 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         try {
-            const response = await fetch(endpoint, {
+            const fetchURL = endpoint === '/detect_points' ? `${endpoint}/${numPoints}` : endpoint;
+            const response = await fetch(fetchURL, {
                 method: 'POST',
             });
             const result = await response.json();
             if (response.ok) {
-                displayProcessedImage(result.image_url, result.message);
+                if (endpoint === '/detect_points') {
+                    currentDetectedImageURL = result.detected_image_url;
+                    currentPointsOnlyURL = result.points_only_url;
+                }
+                displayProcessedImages(result, endpoint);
             } else {
                 throw new Error(result.error);
             }
@@ -159,49 +163,93 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Event listener para el botón de "Detectar Puntos"
     btnDetectar.addEventListener('click', () => {
         processImage('/detect_points', 'Detectando puntos faciales...');
     });
-    
-    // Event listener para el botón de "Triangular Delaunay"
+
     btnTriangular.addEventListener('click', () => {
         processImage('/triangulate_delaunay', 'Aplicando triangulación de Delaunay...');
     });
-    
-    // Event listener para el botón de "Salvar Imagen"
+
     btnSalvar.addEventListener('click', () => {
         window.location.href = '/download_image';
     });
 
-    // Función para mostrar la imagen original al subir
-    function displayOriginalImage(imageURL) {
+    function displayInitialResult(imageURL) {
+        mainContent.innerHTML = `
+            <div class="grid-container">
+                <div class="result-container">
+                    <h2>Imagen Original</h2>
+                    <img src="${imageURL}" alt="Imagen Original">
+                </div>
+            </div>
+        `;
+    }
+
+    function displayProcessedImages(result, endpoint) {
         mainContent.innerHTML = '';
         const gridContainer = document.createElement('div');
         gridContainer.className = 'grid-container';
-        gridContainer.innerHTML = `
-            <div class="result-container">
-                <h2>Imagen Original</h2>
-                <img src="${imageURL}" alt="Imagen Original">
-            </div>
-        `;
-        mainContent.appendChild(gridContainer);
-    }
-    
-    // Función para mostrar el resultado procesado
-    function displayProcessedImage(imageURL, title) {
-        const gridContainer = mainContent.querySelector('.grid-container');
-        if (!gridContainer) {
-            // Esto sucede si el usuario presiona un botón de procesar sin haber subido una imagen
-            // En ese caso, mostramos el resultado en el contenedor principal
-            displayOriginalImage(imageURL); 
-            return;
+
+        if (currentOriginalImageURL) {
+            gridContainer.innerHTML += `
+                <div class="result-container">
+                    <h2>Imagen Original</h2>
+                    <img src="${currentOriginalImageURL}" alt="Imagen Original">
+                </div>
+            `;
         }
-        gridContainer.innerHTML += `
-            <div class="result-container">
-                <h2>${title}</h2>
-                <img src="${imageURL}" alt="${title}">
-            </div>
-        `;
+
+        if (endpoint === '/detect_points' && result.detected_image_url) {
+            gridContainer.innerHTML += `
+                <div class="result-container">
+                    <h2>Imagen con Puntos</h2>
+                    <img src="${result.detected_image_url}" alt="Imagen con Puntos">
+                </div>
+            `;
+        } else if (endpoint === '/triangulate_delaunay' && currentDetectedImageURL) {
+            gridContainer.innerHTML += `
+                <div class="result-container">
+                    <h2>Imagen con Puntos</h2>
+                    <img src="${currentDetectedImageURL}" alt="Imagen con Puntos">
+                </div>
+            `;
+        }
+        
+        if (endpoint === '/triangulate_delaunay' && result.triangulated_image_url) {
+            gridContainer.innerHTML += `
+                <div class="result-container">
+                    <h2>Imagen con Triangulación</h2>
+                    <img src="${result.triangulated_image_url}" alt="Imagen con Triangulación">
+                </div>
+            `;
+        }
+
+        if (endpoint === '/detect_points' && result.points_only_url) {
+            gridContainer.innerHTML += `
+                <div class="result-container">
+                    <h2>Solo Puntos</h2>
+                    <img src="${result.points_only_url}" alt="Solo puntos">
+                </div>
+            `;
+        } else if (endpoint === '/triangulate_delaunay' && currentPointsOnlyURL) {
+            gridContainer.innerHTML += `
+                <div class="result-container">
+                    <h2>Solo Puntos</h2>
+                    <img src="${currentPointsOnlyURL}" alt="Solo puntos">
+                </div>
+            `;
+        }
+
+        if (endpoint === '/triangulate_delaunay' && result.triangulation_only_url) {
+            gridContainer.innerHTML += `
+                <div class="result-container">
+                    <h2>Solo Triangulación</h2>
+                    <img src="${result.triangulation_only_url}" alt="Solo triangulación">
+                </div>
+            `;
+        }
+
+        mainContent.appendChild(gridContainer);
     }
 });
