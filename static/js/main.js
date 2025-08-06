@@ -2,62 +2,92 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnIniciar = document.getElementById('btn-iniciar');
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('.main-content');
-    const btnSalir = document.createElement('button'); // Creamos el botón "Salir"
-
-    btnSalir.textContent = 'Salir';
-    btnSalir.className = 'menu-item';
-
-    let sidebarVisible = false;
+    const inputUploadFile = document.getElementById('input-upload-file');
+    const introMessage = document.getElementById('intro-message');
 
     btnIniciar.addEventListener('click', () => {
-        if (!sidebarVisible) {
-            sidebar.classList.add('show');
-            mainContent.classList.add('pushed');
+        sidebar.classList.toggle('show');
+        mainContent.classList.toggle('pushed');
+        if (sidebar.classList.contains('show')) {
             btnIniciar.textContent = 'Salir';
-            sidebarVisible = true;
-            // Puedes añadir el botón de "Salir" aquí o en el header
+            if (introMessage) introMessage.style.display = 'none';
         } else {
-            sidebar.classList.remove('show');
-            mainContent.classList.remove('pushed');
             btnIniciar.textContent = 'Iniciar';
-            sidebarVisible = false;
+            if (introMessage) introMessage.style.display = 'block';
         }
     });
 
     // Event listener para el botón de "Subir Imagen"
-    const inputUploadFile = document.getElementById('input-upload-file');
     inputUploadFile.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file) {
-            console.log('Archivo seleccionado:', file.name);
-            // Aquí llamaremos a la función para subir la imagen al servidor
-            // uploadImage(file);
-            // Por ahora, solo mostraremos la imagen en el main
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                displayImage(e.target.result, 'Imagen Subida');
-            };
-            reader.readAsDataURL(file);
+            uploadImage(file);
         }
     });
 
-    // Función para mostrar la imagen en el contenedor principal
-    function displayImage(imageUrl, title) {
-        const mainContent = document.querySelector('.main-content');
+    async function uploadImage(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Mostrar un mensaje de carga
+        mainContent.innerHTML = `
+            <div class="intro-message">
+                <h1>Procesando imagen...</h1>
+                <p>Esto puede tardar unos segundos.</p>
+            </div>
+        `;
+
+        try {
+            const response = await fetch('/upload_image', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error al procesar la imagen');
+            }
+
+            const result = await response.json();
+            displayResults(file, result);
+
+        } catch (error) {
+            console.error('Error:', error);
+            mainContent.innerHTML = `
+                <div class="intro-message">
+                    <h1>Error</h1>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    }
+
+    function displayResults(originalFile, result) {
         mainContent.innerHTML = ''; // Limpia el contenido anterior
 
-        const imageContainer = document.createElement('div');
-        imageContainer.className = 'result-container';
+        const gridContainer = document.createElement('div');
+        gridContainer.className = 'grid-container';
 
-        const titleElement = document.createElement('h2');
-        titleElement.textContent = title;
+        // Cuadro para la imagen original
+        const originalImageURL = URL.createObjectURL(originalFile);
+        gridContainer.innerHTML += `
+            <div class="result-container">
+                <h2>Imagen Original</h2>
+                <img src="${originalImageURL}" alt="Imagen Original">
+            </div>
+        `;
 
-        const imageElement = document.createElement('img');
-        imageElement.src = imageUrl;
-        imageElement.alt = title;
+        // Cuadro para la imagen procesada
+        gridContainer.innerHTML += `
+            <div class="result-container">
+                <h2>Rostro y Puntos Detectados</h2>
+                <img src="${result.image_url}" alt="Imagen Procesada">
+            </div>
+        `;
 
-        imageContainer.appendChild(titleElement);
-        imageContainer.appendChild(imageElement);
-        mainContent.appendChild(imageContainer);
+        mainContent.appendChild(gridContainer);
+
+        // Revoca la URL del objeto después de un tiempo para liberar memoria
+        setTimeout(() => URL.revokeObjectURL(originalImageURL), 5000);
     }
 });
