@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCapturarFoto = document.getElementById('btn-capturar-foto');
     const btnDetectar = document.getElementById('btn-detectar');
     const btnTriangular = document.getElementById('btn-triangular');
+    const btnSalvar = document.getElementById('btn-salvar');
 
     let videoStream = null;
 
@@ -23,9 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Detener la cámara web si está activa
             stopWebcam();
+            
+            // Limpiar el contenido del main-content al salir
+            mainContent.innerHTML = '';
+            if (introMessage) mainContent.appendChild(introMessage);
+            introMessage.style.display = 'block';
         }
     });
 
+    // ... (El resto del código sigue igual, ya lo tenemos sincronizado) ...
     // Lógica para subir una imagen desde un archivo
     inputUploadFile.addEventListener('change', (event) => {
         const file = event.target.files[0];
@@ -161,6 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
     btnTriangular.addEventListener('click', () => {
         processImage('/triangulate_delaunay', 'Aplicando triangulación de Delaunay...');
     });
+    
+    // Event listener para el botón de "Salvar Imagen"
+    btnSalvar.addEventListener('click', () => {
+        window.location.href = '/download_image';
+    });
 
     // Función para mostrar la imagen original al subir
     function displayOriginalImage(imageURL) {
@@ -180,7 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayProcessedImage(imageURL, title) {
         const gridContainer = mainContent.querySelector('.grid-container');
         if (!gridContainer) {
-            displayOriginalImage(imageURL);
+            // Esto sucede si el usuario presiona un botón de procesar sin haber subido una imagen
+            // En ese caso, mostramos el resultado en el contenedor principal
+            displayOriginalImage(imageURL); 
             return;
         }
         gridContainer.innerHTML += `

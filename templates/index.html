@@ -9,9 +9,11 @@
 </head>
 <body>
     <header class="header">
-        <a href="/" class="logo">Delaunay WebApp</a>
+        <div class="header-left">
+            <a href="/" class="logo">Delaunay WebApp</a>
+            <button id="btn-iniciar" class="btn-iniciar">Iniciar</button>
+        </div>
         <div class="header-right">
-            <button id="btn-iniciar" class="iniciar">Iniciar</button>
             <div class="profile-container">
                 <img src="{{ url_for('static', filename='img/orat_foto.jpg') }}" alt="Foto de Perfil" class="profile-pic">
             </div>

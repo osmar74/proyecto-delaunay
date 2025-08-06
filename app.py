@@ -65,6 +65,9 @@ def detect_points():
     temp_path = os.path.join(app.config['UPLOAD_FOLDER'], 'detected_' + filename)
     cv2.imwrite(temp_path, processed_image)
 
+    # Actualizar la ruta global para que apunte a la imagen procesada
+    last_image_path = temp_path
+
     return jsonify({
         'success': True,
         'image_url': f'/uploaded_images/detected_{filename}',
@@ -95,6 +98,9 @@ def triangulate_delaunay():
     temp_path = os.path.join(app.config['UPLOAD_FOLDER'], 'triangulated_' + filename)
     cv2.imwrite(temp_path, triangulated_image)
     
+    # Actualizar la ruta global para que apunte a la imagen triangulada
+    last_image_path = temp_path
+
     return jsonify({
         'success': True,
         'image_url': f'/uploaded_images/triangulated_{filename}',
@@ -107,6 +113,18 @@ def uploaded_file(filename):
     Ruta para servir archivos desde la carpeta data_rostro.
     """
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/download_image', methods=['GET'])
+def download_image():
+    global last_image_path
+    if not last_image_path or not os.path.exists(last_image_path):
+        return jsonify({'error': 'No hay una imagen para descargar'}), 400
+
+    # Obtener el nombre del archivo de la última imagen procesada
+    filename = os.path.basename(last_image_path)
+    
+    # Enviar el archivo para su descarga
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
